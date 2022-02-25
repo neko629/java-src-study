@@ -107,6 +107,7 @@ package java.util.concurrent;
 public class ExecutorCompletionService<V> implements CompletionService<V> {
     private final Executor executor;
     private final AbstractExecutorService aes;
+    // 用于存放已经执行完成的任务
     private final BlockingQueue<Future<V>> completionQueue;
 
     /**
@@ -117,6 +118,7 @@ public class ExecutorCompletionService<V> implements CompletionService<V> {
             super(task, null);
             this.task = task;
         }
+        // 把执行完成的任务放入队列
         protected void done() { completionQueue.add(task); }
         private final Future<V> task;
     }
@@ -189,14 +191,23 @@ public class ExecutorCompletionService<V> implements CompletionService<V> {
         return f;
     }
 
+    /**
+     * 取队列头部元素, 如果队列为空, 则阻塞
+     */
     public Future<V> take() throws InterruptedException {
         return completionQueue.take();
     }
 
+    /**
+     * 取队列头部元素, 如果队列为空, 则返回 null
+     */
     public Future<V> poll() {
         return completionQueue.poll();
     }
 
+    /**
+     * 指定时间内取队列头部元素, 如果超时, 则返回 null
+     */
     public Future<V> poll(long timeout, TimeUnit unit)
             throws InterruptedException {
         return completionQueue.poll(timeout, unit);

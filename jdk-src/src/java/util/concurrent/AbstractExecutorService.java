@@ -242,8 +242,10 @@ public abstract class AbstractExecutorService implements ExecutorService {
             }
             for (int i = 0, size = futures.size(); i < size; i++) {
                 Future<T> f = futures.get(i);
+                // 如果任务没有执行完毕
                 if (!f.isDone()) {
                     try {
+                        // 通过 get 阻塞住直到拿到结果确认已执行完毕
                         f.get();
                     } catch (CancellationException ignore) {
                     } catch (ExecutionException ignore) {
@@ -279,6 +281,7 @@ public abstract class AbstractExecutorService implements ExecutorService {
             for (int i = 0; i < size; i++) {
                 execute((Runnable)futures.get(i));
                 nanos = deadline - System.nanoTime();
+                // 如果时间到了, 直接把已经执行完的结果返回
                 if (nanos <= 0L)
                     return futures;
             }
@@ -293,14 +296,17 @@ public abstract class AbstractExecutorService implements ExecutorService {
                     } catch (CancellationException ignore) {
                     } catch (ExecutionException ignore) {
                     } catch (TimeoutException toe) {
+                        // 如果等待时间超时,直接返回已执行完的结果
                         return futures;
                     }
+                    // 每次 get 花费的时间需要减去
                     nanos = deadline - System.nanoTime();
                 }
             }
             done = true;
             return futures;
         } finally {
+            // 如果不是每个任务都执行完毕, done 为 false, 需要取消没有执行完毕的任务
             if (!done)
                 for (int i = 0, size = futures.size(); i < size; i++)
                     futures.get(i).cancel(true);
